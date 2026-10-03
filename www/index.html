@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Daily Task Tracker</title>
+<style>
+:root{--bg:#0e1116;--card:#171b22;--tx:#eef1f6;--mu:#8b94a5;--ac:#d4af6a;--ok:#4cc38a;--am:#f0a93b;--bad:#ef5b5b;--ln:#262c37;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+@media (prefers-color-scheme:light){:root:not([data-theme="dark"]){--bg:#f6f4ef;--card:#fff;--tx:#1b1f27;--mu:#6b7280;--ln:#e5e1d8;--ac:#a67c2e}}
+:root[data-theme="dark"]{--bg:#0e1116;--card:#171b22;--tx:#eef1f6;--mu:#8b94a5;--ln:#262c37;--ac:#d4af6a}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--tx);font:15px/1.4 system-ui,-apple-system,sans-serif;max-width:520px;margin:auto;padding:16px}
+h1{font-size:13px;letter-spacing:.2em;text-transform:uppercase;color:var(--ac);margin:0 0 4px}
+.clock{font-size:34px;font-weight:300;font-variant-numeric:tabular-nums}.date{color:var(--mu);font-size:13px}
+.card{background:var(--card);border:1px solid var(--ln);border-radius:16px;padding:14px;margin:12px 0}
+.bar{height:6px;background:var(--ln);border-radius:9px;overflow:hidden;margin-top:6px}.bar i{display:block;height:100%;background:linear-gradient(90deg,var(--ac),#f0d9a0);border-radius:9px;transition:width 1s linear}
+.row{display:flex;justify-content:space-between;align-items:baseline;font-size:12px;color:var(--mu)}.big{font-size:22px;color:var(--tx);font-variant-numeric:tabular-nums;font-weight:300}
+button,.btn{background:var(--ac);color:#111;border:0;border-radius:12px;padding:12px 16px;font-weight:600;font-size:15px;width:100%;cursor:pointer;display:block;text-align:center}
+button.g{background:transparent;color:var(--mu);border:1px solid var(--ln);font-weight:500}
+.tabs,.acts{display:flex;gap:8px}.tabs button,.acts button{padding:8px;font-size:13px}
+.t{display:flex;gap:12px;align-items:flex-start}.t+.t{border-top:1px solid var(--ln);margin-top:12px;padding-top:12px}
+.ck{width:24px;height:24px;border-radius:50%;border:2px solid var(--mu);flex:none;margin-top:2px;cursor:pointer;display:grid;place-items:center;font-size:14px;color:#111}
+.done .ck{background:var(--ok);border-color:var(--ok)}.done .nm{text-decoration:line-through;color:var(--mu)}
+.nm{flex:1}.meta{font-size:12px;color:var(--mu);margin-top:3px;display:flex;gap:10px;flex-wrap:wrap}
+.p{padding:1px 8px;border-radius:9px;font-size:11px;cursor:pointer;font-weight:600}.p1{background:#ef5b5b33;color:var(--bad)}.p2{background:#d4af6a33;color:var(--ac)}.p3{background:#4cc38a33;color:var(--ok)}
+.rem{font-variant-numeric:tabular-nums}.late{color:var(--bad)}
+.ub{height:4px;background:var(--ln);border-radius:9px;margin-top:6px;overflow:hidden}.ub i{display:block;height:100%;width:100%;background:var(--ok);transition:width 1s linear,background .5s}
+input[type=text],input[type=time],select{padding:9px;border-radius:10px;border:1px solid var(--ln);background:var(--bg);color:var(--tx);font-size:14px}
+input[type=text]{width:100%}.rv{display:flex;gap:6px;margin:8px 0;flex-wrap:wrap}.rv input[type=text]{flex:1 1 100%}
+.empty{text-align:center;color:var(--mu);padding:24px 8px}.hide{display:none}
+.foc{text-align:center;padding:18px 6px}.foc .ft{font-size:22px;margin:8px 0}.foc .fc{font-size:44px;font-weight:300;font-variant-numeric:tabular-nums;margin:8px 0}
+.ch{display:flex;gap:6px;align-items:flex-end;height:70px;margin-top:10px}.ch div{flex:1;background:var(--ac);border-radius:4px 4px 0 0;min-height:3px}
+.st3{display:flex;justify-content:space-around;text-align:center}.st3 b{display:block;font-size:22px;font-weight:300}.st3 span{font-size:11px;color:var(--mu)}
+.th{width:100%;border-radius:10px;margin-top:8px}
+#toast{position:fixed;left:16px;right:16px;top:calc(12px + env(safe-area-inset-top,0px));max-width:488px;margin:auto;background:var(--ac);color:#111;padding:12px;border-radius:12px;font-weight:600;z-index:9;display:none}
+</style></head><body>
+<div id="toast"></div>
+<h1>Daily Task Tracker</h1>
+<div class="clock" id="clk"></div><div class="date" id="dt"></div>
+<div class="card">
+  <div class="row"><span>Resets in</span><span id="rp"></span></div>
+  <div class="big" id="rs"></div><div class="bar"><i id="rb"></i></div>
+</div>
+<div class="tabs"><button id="tt">Today</button><button id="ta" class="g">Archive</button></div>
+
+<div id="today">
+  <div class="card" id="prog"></div>
+  <div class="acts"><button class="g" id="fb">🎯 Focus</button><button class="g" id="nb">🔔 Alerts</button></div>
+  <div class="card" id="list"></div>
+  <div class="card hide" id="rev"></div>
+  <label class="btn" id="pick">📷 Add photo of tasks<input type="file" id="f" accept="image/*" hidden></label>
+  <div id="st" class="row" style="margin:8px 2px"></div>
+  <div class="card"><input type="text" id="man" placeholder="Add task manually, press Enter"></div>
+</div>
+<div id="arch" class="hide"></div>
+
+<script>
+const $=id=>document.getElementById(id),DAY=864e5;
+let S={start:null,tasks:[],arch:[],carry:[],photo:null,focus:false},R=null;
+try{const r=localStorage.getItem('dtt');if(r)S=Object.assign(S,JSON.parse(r))}catch(e){}
+function save(){schedule();try{localStorage.setItem('dtt',JSON.stringify(S))}catch(e){S.arch.forEach((a,i)=>{if(i>2)delete a.photo});try{localStorage.setItem('dtt',JSON.stringify(S))}catch(e){}}}
+const pad=n=>String(n).padStart(2,'0');
+const fmt=ms=>{ms=Math.max(0,ms);const s=Math.floor(ms/1e3);return pad(Math.floor(s/3600))+':'+pad(Math.floor(s%3600/60))+':'+pad(s%60)};
+const h12=t=>{const[h,m]=t.split(':').map(Number);return(h%12||12)+':'+pad(m)+' '+(h<12?'AM':'PM')};
+const esc=s=>String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const okT=t=>/^\d{1,2}:\d{2}$/.test(t||'')?t:null;
+function endMs(t){if(!t.end)return null;const[h,m]=t.end.split(':').map(Number);const b=S.start||Date.now();const d=new Date(b);d.setHours(h,m,0,0);if(+d<b)d.setDate(d.getDate()+1);return +d}
+const sorted=()=>S.tasks.slice().sort((a,b)=>a.done-b.done||a.p-b.p||(endMs(a)||9e15)-(endMs(b)||9e15));
+function toast(m){const t=$('toast');t.textContent=m;t.style.display='block';clearTimeout(toast.i);toast.i=setTimeout(()=>t.style.display='none',6000);try{navigator.vibrate&&navigator.vibrate([200,100,200])}catch(e){}}
+const LN=window.Capacitor&&Capacitor.Plugins&&Capacitor.Plugins.LocalNotifications;
+function notify(m){toast(m)}
+let sch=0;
+async function schedule(){
+  if(!LN)return;const my=++sch;
+  try{const p=await LN.getPending();if(p.notifications.length)await LN.cancel({notifications:p.notifications.map(n=>({id:n.id}))});
+  if(my!==sch)return;const now=Date.now(),L=[];let id=1;
+  const add=(at,title,body)=>{if(at>now+2000)L.push({id:id++,title,body,schedule:{at:new Date(at),allowWhileIdle:true},channelId:'tasks'})};
+  S.tasks.forEach(t=>{if(t.done||!t.end)return;const e=endMs(t);
+    add(e-18e5,'30 min left',t.title);add(e-6e5,'10 min left',t.title);add(e,'Time is up',t.title)});
+  if(S.start)add(S.start+DAY,'New day','Add a photo of today\'s tasks.');
+  if(L.length)await LN.schedule({notifications:L})}catch(e){}}
+async function setupLN(){if(!LN)return false;try{await LN.createChannel({id:'tasks',name:'Task alerts',importance:5,vibration:true});
+  const p=await LN.requestPermissions();return p.display=='granted'}catch(e){return false}}
+$('nb').onclick=async()=>{const ok=await setupLN();toast(ok?'Alerts on. They work even when the app is closed.':'Notifications blocked. Enable them in phone Settings > Apps.');schedule()};
+setupLN();
+function rollover(){
+  if(S.start&&Date.now()-S.start>=DAY){
+    if(S.tasks.length)S.arch.unshift({start:S.start,tasks:S.tasks,photo:S.photo});
+    S.carry=S.tasks.filter(t=>!t.done).map(t=>({title:t.title,priority:t.p,end:t.end}));
+    S.tasks=[];S.photo=null;S.start=null;save();render();
+    notify('New day: add a photo of today\'s tasks.')}
+}
+function render(){
+  const T=sorted(),d=S.tasks.filter(t=>t.done).length,n=S.tasks.length;
+  $('prog').innerHTML=n?`<div class="row"><span>Progress</span><span>${d}/${n}</span></div><div class="bar"><i style="width:${d/n*100}%;background:var(--ok)"></i></div>`:'<div class="row"><span>No tasks yet</span></div>';
+  $('fb').className=S.focus?'':'g';
+  const nx=T.find(t=>!t.done);
+  if(S.focus&&n){$('list').innerHTML=nx?`<div class="foc" data-id="${nx.id}"><div class="row" style="justify-content:center"><span class="p p${nx.p}">${['','High','Medium','Low'][nx.p]}</span></div><div class="ft">${esc(nx.title)}</div>${nx.end?`<div class="fc rem" data-e="${endMs(nx)}"></div><div class="meta" style="justify-content:center">ends ${h12(nx.end)}</div>`:''}<button data-a="c" style="margin-top:12px">✓ Done</button></div>`:'<div class="empty">All done 🎉</div>'}
+  else $('list').innerHTML=n?T.map(t=>`<div class="t ${t.done?'done':''}" data-id="${t.id}"><div class="ck" data-a="c">${t.done?'✓':''}</div><div class="nm">${esc(t.title)}<div class="meta"><span class="p p${t.p}" data-a="p">${['','High','Medium','Low'][t.p]}</span>${t.end?`<span>ends ${h12(t.end)}</span><span class="rem" data-e="${endMs(t)}"></span>`:''}<span data-a="x" style="cursor:pointer">✕</span></div>${t.end&&!t.done?`<div class="ub"><i data-e="${endMs(t)}" data-s="${t.added||S.start||Date.now()}"></i></div>`:''}</div></div>`).join(''):'<div class="empty">Send a photo of your task list to begin.</div>';
+  renderArch();tick()}
+function renderArch(){
+  const A=S.arch,pc=a=>a.tasks.length?a.tasks.filter(t=>t.done).length/a.tasks.length:0;
+  let h='';
+  if(A.length){const w=A.slice(0,7).reverse();let st=0;for(const a of A){if(pc(a)>=.7)st++;else break}
+    const av=Math.round(A.slice(0,7).reduce((s,a)=>s+pc(a),0)/Math.min(7,A.length)*100);
+    h+=`<div class="card"><div class="st3"><div><b>${st}🔥</b><span>day streak (≥70%)</span></div><div><b>${av}%</b><span>7-day average</span></div><div><b>${A.length}</b><span>days logged</span></div></div><div class="ch">${w.map(a=>`<div style="height:${Math.max(4,pc(a)*100)}%" title="${Math.round(pc(a)*100)}%"></div>`).join('')}</div></div>`}
+  h+=A.length?A.map(a=>`<div class="card"><div class="row"><span>${new Date(a.start).toLocaleDateString(undefined,{weekday:'short',day:'numeric',month:'short',year:'numeric'})}</span><span>${a.tasks.filter(t=>t.done).length}/${a.tasks.length} done</span></div>${a.tasks.map(t=>`<div class="meta" style="font-size:14px;color:${t.done?'var(--ok)':'var(--tx)'}">${t.done?'✓':'○'} ${esc(t.title)}${t.end?' · '+h12(t.end):''}</div>`).join('')}${a.photo?`<img class="th" src="${a.photo}" alt="original photo">`:''}</div>`).join(''):'<div class="empty">Archive is empty.</div>';
+  $('arch').innerHTML=h}
+function tick(){
+  const now=new Date();$('clk').textContent=now.toLocaleTimeString([],{hour12:true});
+  $('dt').textContent=now.toLocaleDateString(undefined,{weekday:'long',day:'numeric',month:'long',year:'numeric'});
+  const left=S.start?S.start+DAY-+now:DAY;$('rs').textContent=S.start?fmt(left):'24:00:00';$('rb').style.width=S.start?(100-left/DAY*100)+'%':'0%';
+  $('rp').textContent=S.start?'':'starts after photo upload';
+  document.querySelectorAll('.rem').forEach(e=>{const r=e.dataset.e-now;const box=e.closest('.t')||e.closest('.foc');const dn=box.classList.contains('done');
+    e.textContent=dn?'':(r>0?fmt(r)+(e.classList.contains('fc')?'':' left'):'overdue');e.classList.toggle('late',r<=0&&!dn)});
+  document.querySelectorAll('.ub i').forEach(e=>{const end=+e.dataset.e,s=+e.dataset.s,f=Math.max(0,Math.min(1,(end-now)/Math.max(1,end-s)));
+    e.style.width=(f*100)+'%';e.style.background=end-now<=0||f<.1?'var(--bad)':f<.3?'var(--am)':'var(--ok)'});
+  let ch=0;S.tasks.forEach(t=>{if(t.done||!t.end)return;const r=endMs(t)-now;
+    if(r<=0&&!t.a0){t.a0=1;ch=1;notify('Time is up: '+t.title)}
+    else if(r<=6e5&&r>0&&!t.a10){t.a10=1;ch=1;notify('10 min left: '+t.title)}
+    else if(r<=18e5&&r>6e5&&!t.a30){t.a30=1;ch=1;notify('30 min left: '+t.title)}});
+  if(ch)save();
+  if(S.start&&left<=0)rollover()}
+$('list').onclick=e=>{const a=e.target.dataset.a,el=e.target.closest('[data-id]');if(!a||!el)return;
+  const t=S.tasks.find(x=>x.id==el.dataset.id);
+  if(a=='c')t.done=!t.done;if(a=='p')t.p=t.p%3+1;if(a=='x')S.tasks=S.tasks.filter(x=>x!==t);save();render()};
+$('fb').onclick=()=>{S.focus=!S.focus;save();render()};
+$('man').onkeydown=e=>{if(e.key=='Enter'&&e.target.value.trim()){add([{title:e.target.value.trim(),priority:2}]);e.target.value=''}};
+function add(a){a.forEach(x=>S.tasks.push({id:Date.now()+Math.random(),title:String(x.title).slice(0,200),p:[1,2,3].includes(+x.priority)?+x.priority:2,end:okT(x.end),done:false,added:Date.now()}));save();render()}
+function b64(f,max){return new Promise((res,rej)=>{const i=new Image(),u=URL.createObjectURL(f);i.onload=()=>{const k=Math.min(1,max/Math.max(i.width,i.height)),c=document.createElement('canvas');c.width=i.width*k;c.height=i.height*k;c.getContext('2d').drawImage(i,0,0,c.width,c.height);URL.revokeObjectURL(u);res(c.toDataURL('image/jpeg',.8).split(',')[1])};i.onerror=rej;i.src=u})}
+async function readPhoto(f){
+  let key=localStorage.getItem('dtt_key');if(!key){key=(prompt('Paste your Anthropic API key (stored only on this phone):')||'').trim();if(!key)throw new Error('nokey');localStorage.setItem('dtt_key',key)}
+  const res=await fetch('https://api.anthropic.com/v1/messages',{method:'POST',headers:{'content-type':'application/json','x-api-key':key,'anthropic-version':'2023-06-01','anthropic-dangerous-direct-browser-access':'true'},
+   body:JSON.stringify({model:'claude-sonnet-4-6',max_tokens:1500,messages:[{role:'user',content:[{type:'image',source:{type:'base64',media_type:'image/jpeg',data:await b64(f,1600)}},{type:'text',text:'This image is a handwritten or printed to-do list. Extract every task. Return ONLY a JSON array of objects: {"title": short task text, "priority": 1 (high), 2 (medium) or 3 (low), inferred from marks like stars, numbers, or urgency words, default 2, "end": deadline in 24h "HH:MM" if a time is written for that task, else null}. Keep the original language.'}]}]})});
+  if(res.status==401){localStorage.removeItem('dtt_key')}
+  if(!res.ok)throw new Error('api '+res.status);
+  const j=await res.json();return JSON.parse(j.content.map(c=>c.text||'').join('').replace(/```json|```/g,'').trim())}
+function thumb(f){return new Promise(res=>{const i=new Image(),u=URL.createObjectURL(f);i.onload=()=>{const k=Math.min(1,700/i.width),c=document.createElement('canvas');c.width=i.width*k;c.height=i.height*k;c.getContext('2d').drawImage(i,0,0,c.width,c.height);URL.revokeObjectURL(u);res(c.toDataURL('image/jpeg',.55))};i.onerror=()=>res(null);i.src=u})}
+function showReview(){
+  const rows=R.items.map((x,i)=>`<div class="rv"><input type="text" value="${esc(x.title)}" data-i="${i}" data-k="title"><select data-i="${i}" data-k="priority">${[1,2,3].map(p=>`<option value="${p}" ${x.priority==p?'selected':''}>${['','High','Medium','Low'][p]}</option>`).join('')}</select><input type="time" value="${x.end?pad(x.end.split(':')[0])+':'+x.end.split(':')[1]:''}" data-i="${i}" data-k="end"><button class="g" style="width:auto;padding:6px 12px" data-del="${i}">✕</button></div>`).join('');
+  $('rev').className='card';$('rev').innerHTML=`<div class="row"><span>Review before saving</span></div>${rows}${S.carry.length?`<label class="meta"><input type="checkbox" id="cr" checked> Carry over ${S.carry.length} unfinished task(s) from yesterday</label>`:''}<div class="acts" style="margin-top:10px"><button id="ok">Save tasks</button><button class="g" id="no">Cancel</button></div>`;
+  $('pick').classList.add('hide')}
+$('rev').oninput=e=>{const{i,k}=e.target.dataset;if(i!=null)R.items[i][k]=k=='end'?(e.target.value||null):e.target.value};
+$('rev').onclick=e=>{const d=e.target.dataset.del;if(d!=null){R.items.splice(+d,1);showReview()}
+  if(e.target.id=='ok'){const cr=$('cr');let it=R.items.filter(x=>String(x.title).trim());if(cr&&cr.checked)it=it.concat(S.carry);S.carry=[];if(!S.start)S.start=Date.now();S.photo=R.thumb||S.photo;add(it);closeRev();$('st').textContent=it.length+' tasks saved.'}
+  if(e.target.id=='no'){closeRev();$('st').textContent=''}};
+function closeRev(){R=null;$('rev').className='card hide';$('pick').classList.remove('hide')}
+$('f').onchange=async e=>{const f=e.target.files[0];e.target.value='';if(!f)return;
+  const st=$('st');st.textContent='Reading photo…';
+  try{const r=await readPhoto(f);
+    if(!Array.isArray(r)||!r.length)throw 0;
+    R={items:r.map(x=>({title:x.title,priority:[1,2,3].includes(+x.priority)?+x.priority:2,end:okT(x.end)})),thumb:await thumb(f)};
+    st.textContent='Check the tasks, then save.';showReview()}
+  catch(err){st.textContent=err&&err.message=='nokey'?'API key needed.':'Could not read tasks. Check internet, key, or photo.'}};
+function tab(a){$('today').classList.toggle('hide',a);$('arch').classList.toggle('hide',!a);$('tt').className=a?'g':'';$('ta').className=a?'':'g'}
+$('tt').onclick=()=>tab(0);$('ta').onclick=()=>tab(1);
+render();schedule();rollover();setInterval(tick,1000);
+</script></body></html>
